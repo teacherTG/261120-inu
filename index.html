@@ -167,10 +167,18 @@ body:hover #ui{opacity:.85}
   .slide{position:relative;opacity:1;visibility:visible;page-break-after:always;height:900px}
   @page{size:1600px 900px;margin:0}
 }
+/* 사진 크게 보기 */
+#deck .photo img[src]:not([src=""]){cursor:zoom-in}
+#lb{position:fixed;inset:0;z-index:100;background:rgba(5,15,35,.92);display:none;align-items:center;justify-content:center;cursor:zoom-out;padding:3vh 3vw}
+#lb.open{display:flex;animation:lbin .25s ease}
+#lb img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#lb .x{position:absolute;right:22px;top:16px;color:#fff;font:700 34px/1 Pretendard,sans-serif;opacity:.8}
+@keyframes lbin{from{opacity:0}to{opacity:1}}
 </style>
 </head>
 <body>
 <div id="progress"></div>
+<div id="lb" role="dialog" aria-label="사진 크게 보기"><span class="x">✕</span><img alt=""></div>
 <div id="deck">
 
 <!-- ========== 01 표지 ========== -->
@@ -849,9 +857,9 @@ document.getElementById('home').onclick=e=>{e.stopPropagation();show(0)};
 document.getElementById('ovbtn').onclick=e=>{e.stopPropagation();openOV()};
 document.getElementById('ov-close').onclick=closeOV;
 document.getElementById('ov-home').onclick=()=>{closeOV();show(0)};
-deck.addEventListener('click',e=>{const r=deck.getBoundingClientRect();e.clientX<r.left+r.width*0.3?prev():next()});
+deck.addEventListener('click',e=>{const im=e.target.closest('.photo')&&e.target.closest('.photo').querySelector('img');const hid=im&&im.closest('[data-build]:not(.shown):not(.keep)');if(im&&im.getAttribute('src')&&!hid){openLB(im.src);return}const r=deck.getBoundingClientRect();e.clientX<r.left+r.width*0.3?prev():next()});
 let tx=0;addEventListener('touchstart',e=>tx=e.touches[0].clientX);
-addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)(d<0?next():prev())});
+addEventListener('touchend',e=>{if(lbOpen())return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)(d<0?next():prev())});
 // 미리보기용 드래그&드롭 (저장되지 않음)
 document.querySelectorAll('.photo').forEach(p=>{
   p.addEventListener('dragover',e=>{e.preventDefault();p.classList.add('drag')});
@@ -862,6 +870,13 @@ document.querySelectorAll('.photo').forEach(p=>{
 addEventListener('dragover',e=>e.preventDefault());addEventListener('drop',e=>e.preventDefault());
 slides.forEach((s,i)=>{const pg=s.querySelector('.pg');if(pg)pg.textContent=String(i+1).padStart(2,'0')});
 fit();show(cur);
+// 사진 크게 보기
+const lb=document.getElementById('lb'),lbImg=lb.querySelector('img');
+function lbOpen(){return lb.classList.contains('open')}
+function openLB(src){lbImg.src=src;lb.classList.add('open')}
+function closeLB(){lb.classList.remove('open')}
+lb.addEventListener('click',e=>{e.stopPropagation();closeLB()});
+addEventListener('keydown',e=>{if(!lbOpen())return;e.stopImmediatePropagation();e.preventDefault();if(['Escape','Enter',' ','Backspace'].includes(e.key))closeLB()},true);
 </script>
 </body>
 </html>
